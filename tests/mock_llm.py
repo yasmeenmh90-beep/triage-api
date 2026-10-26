@@ -16,6 +16,7 @@ Behaviour is chosen by a keyword in the customer message:
   MOCK_429      -> HTTP 429 with Retry-After: 1
 otherwise a simple keyword rule picks a category. API key "bad" -> HTTP 401.
 """
+import asyncio
 import json
 import time
 
@@ -64,7 +65,7 @@ async def completions(request: Request):
     is_repair = len(msgs) > 2
 
     if "MOCK_SLOW" in user:
-        time.sleep(5)
+        await asyncio.sleep(5)
         return _completion(_verdict("technical"))
     if "MOCK_500" in user:
         return JSONResponse(status_code=500, content={"error": {"message": "upstream exploded"}})

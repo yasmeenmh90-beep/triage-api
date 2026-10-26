@@ -21,6 +21,12 @@ class Settings:
     api_key: str
     model: str
     stub: bool
+    enabled: bool              # kill switch: LLM_ENABLED=false skips the model entirely
+    timeout_s: float           # hard per-call timeout (SDK default is 10 minutes)
+    max_retries: int           # OUR retries; the SDK's own retries are set to 0
+    retry_base_s: float        # backoff: base, 2*base, 4*base ... plus jitter
+    price_in_per_m: float      # USD per 1M input tokens (0 for Ollama / free models)
+    price_out_per_m: float     # USD per 1M output tokens
 
 
 def get_settings() -> Settings:
@@ -29,4 +35,10 @@ def get_settings() -> Settings:
         api_key=os.getenv("LLM_API_KEY", "ollama"),
         model=os.getenv("LLM_MODEL", "gemma3:1b"),
         stub=_flag("LLM_STUB", "0"),
+        enabled=_flag("LLM_ENABLED", "true"),
+        timeout_s=float(os.getenv("LLM_TIMEOUT_SECONDS", "30")),
+        max_retries=int(os.getenv("LLM_MAX_RETRIES", "2")),
+        retry_base_s=float(os.getenv("LLM_RETRY_BASE_SECONDS", "1")),
+        price_in_per_m=float(os.getenv("LLM_PRICE_IN_PER_M", "0")),
+        price_out_per_m=float(os.getenv("LLM_PRICE_OUT_PER_M", "0")),
     )
