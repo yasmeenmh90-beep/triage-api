@@ -4,7 +4,7 @@
     python -m evals.run_eval                  # in another
 
 Key field = category. Urgency is reported too but does not decide pass/fail.
-Results are saved to evals/results/<date>_<prompt>_<model>_reasoning-<effort>[_<label>].json.
+Results are saved to evals/results/<date>_<HHMM>_<prompt>_<model>_reasoning-<effort>[_<label>].json.
 
     python -m evals.run_eval --cases evals/cases-hard.json --label hard
 """
@@ -77,7 +77,7 @@ def main() -> int:
     out_dir.mkdir(exist_ok=True)
     safe_model = re.sub(r"[^A-Za-z0-9._-]", "_", model)
     tag = f"_{args.label}" if args.label else ""
-    out = out_dir / f"{datetime.now():%Y-%m-%d}_{version}_{safe_model}_reasoning-{effort}{tag}.json"
+    out = out_dir / f"{datetime.now():%Y-%m-%d_%H%M}_{version}_{safe_model}_reasoning-{effort}{tag}.json"
     out.write_text(json.dumps({"prompt_version": version, "model": model,
                                "reasoning_effort": effort, "max_tokens": int(max_tokens),
                                "cases_file": Path(args.cases).name,
