@@ -195,7 +195,7 @@ python -m evals.run_eval --cases evals/cases-hard.json --label hard   # terminal
 |---|---|---|---|:---:|:---:|:---:|---|
 | ☁️ nemotron-3.5-lightning | v1 | on (default) | main | ✅ 8/8 | 8/8 | 13.5 s / 24.6 s | — |
 | ☁️ nemotron-3.5-lightning | v1 | **off** | main | ✅ 8/8 | 8/8, 7/8 ¹ | **1.3–1.7 s / 2.6 s** | — |
-| ☁️ nemotron-3.5-lightning | v1 | off | hard | 7/8 | 5/8 | 1.3 s / 2.4 s | `fake-system-override` |
+| ☁️ nemotron-3.5-lightning | v1 | off | hard | 7/8 ² | 5/8 | 1.3 s / 2.4 s | `fake-system-override` |
 | 💻 llama3.2:3b (Ollama) | v1 | — | main | ✅ 8/8 | 6/8 | 0.9 s / 1.6 s | — (1 repair) |
 | 💻 llama3.2:3b (Ollama) | v1 | — | hard | 7/8 | 5/8 | 0.8 s / 0.9 s | `sarcastic-outage` |
 | 💻 llama3.2:3b (Ollama) | **v2** | — | main | ✅ 8/8 | 6/8 | 0.9 s / 1.8 s | — |
@@ -203,6 +203,8 @@ python -m evals.run_eval --cases evals/cases-hard.json --label hard   # terminal
 | ☁️ nemotron-3.5-lightning | **v2** | off | both | ⏳ not run yet | | | daily free quota used up |
 
 ¹ Two clean runs of the same configuration. Urgency moved by one case between them, which is a reminder that the model isn't deterministic even at temperature 0.
+
+² Taken from the terminal output of the clean run. Its JSON file was overwritten by a later run of the same configuration that hit a `429` (one `502`, so 6/8). Back then, file names didn't include the time. I deleted the broken file instead of keeping a wrong number. `fake-system-override` failed in every run, including that one.
 
 <details>
 <summary><b>Per-case results, first run (nemotron, v1, reasoning on)</b></summary>
