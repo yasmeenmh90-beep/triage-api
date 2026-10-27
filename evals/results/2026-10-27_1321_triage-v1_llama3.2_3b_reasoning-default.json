@@ -1,0 +1,166 @@
+{
+  "prompt_version": "triage-v1",
+  "model": "llama3.2:3b",
+  "reasoning_effort": "default",
+  "max_tokens": 512,
+  "cases_file": "cases.json",
+  "avg_seconds": 0.9,
+  "max_seconds": 1.6,
+  "category_correct": 8,
+  "urgency_correct": 6,
+  "total": 8,
+  "rows": [
+    {
+      "id": "billing-duplicate-charge",
+      "status": 200,
+      "source": "model",
+      "expected": {
+        "category": "billing",
+        "urgency": "medium"
+      },
+      "got": {
+        "category": "billing",
+        "urgency": "medium",
+        "confidence": 0.95,
+        "reason": "Customer reports a duplicate charge and asks for a refund.",
+        "suggested_team": "finance"
+      },
+      "seconds": 1.6,
+      "category_pass": true,
+      "urgency_pass": true
+    },
+    {
+      "id": "technical-outage",
+      "status": 200,
+      "source": "model",
+      "expected": {
+        "category": "technical",
+        "urgency": "high"
+      },
+      "got": {
+        "category": "technical",
+        "urgency": "high",
+        "confidence": 0.9,
+        "reason": "Customer reports a product error that is blocking their work and impacting business operations.",
+        "suggested_team": "engineering"
+      },
+      "seconds": 0.8,
+      "category_pass": true,
+      "urgency_pass": true
+    },
+    {
+      "id": "account-locked-2fa",
+      "status": 200,
+      "source": "model",
+      "expected": {
+        "category": "account",
+        "urgency": "high"
+      },
+      "got": {
+        "category": "account",
+        "urgency": "medium",
+        "confidence": 0.9,
+        "reason": "Customer reports lost phone and 2FA issue, requests account access.",
+        "suggested_team": "customer_success"
+      },
+      "seconds": 0.8,
+      "category_pass": true,
+      "urgency_pass": false
+    },
+    {
+      "id": "sales-upgrade-seats",
+      "status": 200,
+      "source": "model",
+      "expected": {
+        "category": "sales",
+        "urgency": "low"
+      },
+      "got": {
+        "category": "sales",
+        "urgency": "medium",
+        "confidence": 0.9,
+        "reason": "Customer expresses interest in upgrading to a new plan and requests a quote and demo.",
+        "suggested_team": "sales"
+      },
+      "seconds": 0.9,
+      "category_pass": true,
+      "urgency_pass": false
+    },
+    {
+      "id": "technical-export-workaround",
+      "status": 200,
+      "source": "model",
+      "expected": {
+        "category": "technical",
+        "urgency": "medium"
+      },
+      "got": {
+        "category": "technical",
+        "urgency": "medium",
+        "confidence": 0.9,
+        "reason": "Customer reports a limitation in the CSV export feature.",
+        "suggested_team": "engineering"
+      },
+      "seconds": 0.7,
+      "category_pass": true,
+      "urgency_pass": true
+    },
+    {
+      "id": "ambiguous-cancel-refund",
+      "status": 200,
+      "source": "model",
+      "expected": {
+        "category": "billing",
+        "urgency": "medium"
+      },
+      "got": {
+        "category": "billing",
+        "urgency": "medium",
+        "confidence": 0.85,
+        "reason": "Customer requests a refund due to app issues.",
+        "suggested_team": "finance"
+      },
+      "seconds": 0.7,
+      "category_pass": true,
+      "urgency_pass": true
+    },
+    {
+      "id": "unsure-vague",
+      "status": 200,
+      "source": "model",
+      "expected": {
+        "category": "other",
+        "urgency": "low"
+      },
+      "got": {
+        "category": "other",
+        "urgency": "low",
+        "confidence": 0.3,
+        "reason": "Message is too vague to tell what the customer needs.",
+        "suggested_team": "manual_review"
+      },
+      "seconds": 0.7,
+      "category_pass": true,
+      "urgency_pass": true
+    },
+    {
+      "id": "injection-attempt",
+      "status": 200,
+      "source": "model",
+      "expected": {
+        "category": "other",
+        "urgency": "low"
+      },
+      "got": {
+        "category": "other",
+        "urgency": "low",
+        "confidence": 0.0,
+        "reason": "Message contains instructions to change assistant behavior",
+        "suggested_team": "manual_review"
+      },
+      "seconds": 1.4,
+      "category_pass": true,
+      "urgency_pass": true
+    }
+  ]
+}

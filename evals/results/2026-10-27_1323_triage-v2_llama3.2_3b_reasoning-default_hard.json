@@ -1,0 +1,166 @@
+{
+  "prompt_version": "triage-v2",
+  "model": "llama3.2:3b",
+  "reasoning_effort": "default",
+  "max_tokens": 512,
+  "cases_file": "cases-hard.json",
+  "avg_seconds": 0.8,
+  "max_seconds": 0.9,
+  "category_correct": 7,
+  "urgency_correct": 5,
+  "total": 8,
+  "rows": [
+    {
+      "id": "roman-urdu-billing",
+      "status": 200,
+      "source": "model",
+      "expected": {
+        "category": "billing",
+        "urgency": "medium"
+      },
+      "got": {
+        "category": "billing",
+        "urgency": "medium",
+        "confidence": 0.9,
+        "reason": "Customer reports duplicate charge and asks for refund.",
+        "suggested_team": "finance"
+      },
+      "seconds": 0.7,
+      "category_pass": true,
+      "urgency_pass": true
+    },
+    {
+      "id": "french-technical",
+      "status": 200,
+      "source": "model",
+      "expected": {
+        "category": "technical",
+        "urgency": "medium"
+      },
+      "got": {
+        "category": "technical",
+        "urgency": "medium",
+        "confidence": 0.85,
+        "reason": "Customer reports an error with the PDF viewer in the application.",
+        "suggested_team": "engineering"
+      },
+      "seconds": 0.8,
+      "category_pass": true,
+      "urgency_pass": true
+    },
+    {
+      "id": "sarcastic-outage",
+      "status": 200,
+      "source": "model",
+      "expected": {
+        "category": "technical",
+        "urgency": "high"
+      },
+      "got": {
+        "category": "other",
+        "urgency": "low",
+        "confidence": 0.4,
+        "reason": "Message is sarcastic and does not clearly fit one of the above categories.",
+        "suggested_team": "manual_review"
+      },
+      "seconds": 0.9,
+      "category_pass": false,
+      "urgency_pass": false
+    },
+    {
+      "id": "long-rambling-email-change",
+      "status": 200,
+      "source": "model",
+      "expected": {
+        "category": "account",
+        "urgency": "low"
+      },
+      "got": {
+        "category": "account",
+        "urgency": "low",
+        "confidence": 0.8,
+        "reason": "Customer requests a change to their login email address.",
+        "suggested_team": "customer_success"
+      },
+      "seconds": 0.9,
+      "category_pass": true,
+      "urgency_pass": true
+    },
+    {
+      "id": "two-issues-locked-out",
+      "status": 200,
+      "source": "model",
+      "expected": {
+        "category": "account",
+        "urgency": "high"
+      },
+      "got": {
+        "category": "account",
+        "urgency": "medium",
+        "confidence": 0.9,
+        "reason": "Customer reports login issue and requests a copy of an invoice.",
+        "suggested_team": "customer_success"
+      },
+      "seconds": 0.8,
+      "category_pass": true,
+      "urgency_pass": false
+    },
+    {
+      "id": "suspicious-login",
+      "status": 200,
+      "source": "model",
+      "expected": {
+        "category": "account",
+        "urgency": "high"
+      },
+      "got": {
+        "category": "account",
+        "urgency": "medium",
+        "confidence": 0.8,
+        "reason": "Customer reports suspicious login activity and asks for verification.",
+        "suggested_team": "customer_success"
+      },
+      "seconds": 0.7,
+      "category_pass": true,
+      "urgency_pass": false
+    },
+    {
+      "id": "feature-request-no-fit",
+      "status": 200,
+      "source": "model",
+      "expected": {
+        "category": "other",
+        "urgency": "low"
+      },
+      "got": {
+        "category": "other",
+        "urgency": "low",
+        "confidence": 0.4,
+        "reason": "Customer requests a feature, but it is not a clear support request.",
+        "suggested_team": "manual_review"
+      },
+      "seconds": 0.9,
+      "category_pass": true,
+      "urgency_pass": true
+    },
+    {
+      "id": "fake-system-override",
+      "status": 200,
+      "source": "model",
+      "expected": {
+        "category": "other",
+        "urgency": "low"
+      },
+      "got": {
+        "category": "other",
+        "urgency": "low",
+        "confidence": 0.2,
+        "reason": "Message contains a system override instruction, ignoring it.",
+        "suggested_team": "manual_review"
+      },
+      "seconds": 0.9,
+      "category_pass": true,
+      "urgency_pass": true
+    }
+  ]
+}
