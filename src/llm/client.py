@@ -39,6 +39,8 @@ class ChatResult:
     output_tokens: int
     duration_ms: int
     attempts: int
+    reasoning_tokens: int = 0
+    finish_reason: str | None = None
 
 
 def build_client(settings: Settings) -> OpenAI:
@@ -48,6 +50,21 @@ def build_client(settings: Settings) -> OpenAI:
         timeout=settings.timeout_s,
         max_retries=0,  # explicit: all retries are ours, so one request == the calls we log
     )
+
+
+def request_kwargs(settings: Settings, messages: list[dict]) -> dict:
+    """The exact request body. max_tokens caps cost and latency; reasoning is opt-in per provider."""
+    kwargs = {
+        "model": settings.model,
+        "messages": messages,
+        "temperature": 0,
+        "max_tokens": settings.max_tokens,
+    }
+    if settings.reasoning_effort:
+        # OpenRouter: {"effort": "none"} turns hidden reasoning off. A ~40-token JSON answer
+        # does not need 1,000+ tokens of thinking, and those tokens are billed and slow.
+        kwargs["extra_body"] = {"reasoning": {"effort": settings.reasoning_effort}}
+    return kwargs
 
 
 def _retry_after_seconds(exc: openai.APIStatusError) -> float | None:
@@ -72,16 +89,17 @@ def chat(messages: list[dict]) -> ChatResult:
         attempt += 1
         retry_in: float | None = None
         try:
-            res = client.chat.completions.create(
-                model=settings.model, messages=messages, temperature=0
-            )
+            res = client.chat.completions.create(**request_kwargs(settings, messages))
             usage = res.usage
+            details = getattr(usage, "completion_tokens_details", None)
             return ChatResult(
                 content=res.choices[0].message.content or "",
                 input_tokens=getattr(usage, "prompt_tokens", 0) or 0,
                 output_tokens=getattr(usage, "completion_tokens", 0) or 0,
                 duration_ms=int((time.perf_counter() - started) * 1000),
                 attempts=attempt,
+                reasoning_tokens=getattr(details, "reasoning_tokens", 0) or 0,
+                finish_reason=res.choices[0].finish_reason,
             )
         except openai.APITimeoutError as exc:
             final: Exception = LLMTimeout(f"No answer from the model within {settings.timeout_s:.0f}s.")

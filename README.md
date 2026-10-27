@@ -11,7 +11,7 @@ One endpoint, `POST /triage`. A messy customer message goes in, and clean, schem
 ![Pydantic](https://img.shields.io/badge/Pydantic-v2-E92063?logo=pydantic&logoColor=white)
 ![OpenRouter](https://img.shields.io/badge/LLM-OpenRouter-6566F1)
 ![Eval](https://img.shields.io/badge/eval-8%2F8%20(100%25)-brightgreen)
-![Tests](https://img.shields.io/badge/tests-23%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-26%20passing-brightgreen)
 ![Cost](https://img.shields.io/badge/cost-%240%20(free%20tier)-blue)
 
 [What it does](#-what-it-does) · [Quick start](#-quick-start) · [Try it](#-try-it) · [Job card](#-job-card) · [Provider](#-provider--model) · [Reliability](#%EF%B8%8F-how-it-stays-reliable) · [Eval](#-eval) · [Cost](#-cost) · [Notes](#-notes-from-real-runs) · [Next steps](#-what-id-fix-with-another-day)
@@ -249,10 +249,10 @@ python -m evals.cost_estimate --per-day 10000 --in-price <$/M in> --out-price <$
 ## 🧰 Tests
 
 ```bash
-pytest -q        # 23 tests, no real model and no quota needed
+pytest -q        # 26 tests, no real model and no quota needed
 ```
 
-The tests run against [`tests/mock_llm.py`](tests/mock_llm.py), a fake OpenAI-compatible server. They check **plumbing only**: 400s, stub mode, fence stripping, repair, 422 + quarantine, kill switch, no retries on 401/403/404, retries on 5xx and 429 with `Retry-After`, 504 on timeout, and cost logging. The mock is not a model and says nothing about answer quality. Only the [eval](#-eval) measures that.
+The tests run against [`tests/mock_llm.py`](tests/mock_llm.py), a fake OpenAI-compatible server. They check **plumbing only**: 400s, stub mode, fence stripping, repair, 422 + quarantine, kill switch, no retries on 401/403/404, retries on 5xx and 429 with `Retry-After`, 504 on timeout, cost logging, the `max_tokens` cap, reasoning forwarding, and truncated (`finish_reason=length`) answers. The mock is not a model and says nothing about answer quality. Only the [eval](#-eval) measures that.
 
 <details>
 <summary><b>Project structure</b></summary>
@@ -272,7 +272,7 @@ triage-api/
 │       └── hello.py       Stage 0 smoke test
 ├── prompts/triage-v1.md   the prompt (versioned)
 ├── evals/                 cases.json, run_eval.py, cost_estimate.py, results/
-├── tests/                 mock LLM server + 23 tests
+├── tests/                 mock LLM server + 26 tests
 ├── JOB-CARD.md
 └── .env.example
 ```

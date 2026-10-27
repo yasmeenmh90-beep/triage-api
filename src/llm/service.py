@@ -57,6 +57,10 @@ def _log_call(version: str, repair: bool, outcome: str, result: ChatResult | Non
         "attempts": result.attempts if result else attempts,
         "repair": repair,
         "outcome": outcome,
+        "reasoning_tokens": result.reasoning_tokens if result else 0,
+        "finish_reason": result.finish_reason if result else None,
+        "max_tokens": s.max_tokens,
+        "reasoning_effort": s.reasoning_effort,
         "est_cost_usd": round(in_tok / 1e6 * s.price_in_per_m + out_tok / 1e6 * s.price_out_per_m, 8),
     }
     if error:
@@ -84,6 +88,12 @@ def _quarantine(text: str, raw: str, error: str, version: str) -> None:
     })
 
 
+def _explain(exc: OutputError, result: ChatResult) -> str:
+    if result.finish_reason == "length":
+        return f"{exc} The answer was cut off at max_tokens (finish_reason=length)."
+    return str(exc)
+
+
 def triage_text(text: str) -> TriageResponse:
     version = prompt_version()
     messages = build_messages(text, version)
@@ -94,7 +104,7 @@ def triage_text(text: str) -> TriageResponse:
         _log_call(version, False, "ok", first)
         return TriageResponse.from_verdict(verdict)
     except OutputError as exc:
-        error = str(exc)
+        error = _explain(exc, first)
         _log_call(version, False, "invalid_output", first, error=error)
 
     # Repair once — and only once: same prompt + its broken output + the exact error.
@@ -108,6 +118,7 @@ def triage_text(text: str) -> TriageResponse:
         _log_call(version, True, "ok", second)
         return TriageResponse.from_verdict(verdict)
     except OutputError as exc:
-        _log_call(version, True, "invalid_output", second, error=str(exc))
-        _quarantine(text, second.content, str(exc), version)
-        raise TriageFailed(str(exc)) from exc
+        error = _explain(exc, second)
+        _log_call(version, True, "invalid_output", second, error=error)
+        _quarantine(text, second.content, error, version)
+        raise TriageFailed(error) from exc

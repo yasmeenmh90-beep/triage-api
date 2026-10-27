@@ -237,3 +237,41 @@ def test_cost_log_one_line_per_call(provider, tmp_path, monkeypatch):
         assert {"prompt_version", "model", "input_tokens", "output_tokens", "duration_ms"} <= l.keys()
         assert l["input_tokens"] == 400 and l["output_tokens"] == 40
         assert l["est_cost_usd"] == pytest.approx(400 / 1e6 * 1.0 + 40 / 1e6 * 2.0)
+
+
+# ---- Latency / cost fixes: max_tokens cap, reasoning control, truncation ---------------
+
+def test_max_tokens_is_always_sent_and_reasoning_is_opt_in(provider, monkeypatch):
+    _, calls = provider
+    monkeypatch.delenv("LLM_REASONING_EFFORT", raising=False)
+    monkeypatch.setenv("LLM_MAX_TOKENS", "300")
+    post()
+    assert calls[-1]["max_tokens"] == 300
+    assert "reasoning" not in calls[-1]          # Ollama & co. never see an unknown field
+
+
+def test_reasoning_effort_is_forwarded(provider, monkeypatch):
+    _, calls = provider
+    monkeypatch.setenv("LLM_REASONING_EFFORT", "none")
+    post()
+    assert calls[-1]["reasoning"] == {"effort": "none"}
+
+
+def test_truncated_answer_is_explained_and_quarantined(provider, tmp_path):
+    set_handler, calls = provider
+
+    def cut_off(req):
+        return httpx.Response(200, json={
+            "id": "t", "object": "chat.completion", "created": 0, "model": "fake",
+            "choices": [{"index": 0, "message": {"role": "assistant", "content": ""},
+                         "finish_reason": "length"}],
+            "usage": {"prompt_tokens": 400, "completion_tokens": 512, "total_tokens": 912,
+                      "completion_tokens_details": {"reasoning_tokens": 512}},
+        })
+
+    set_handler(cut_off)
+    r = post()
+    assert r.status_code == 422 and "max_tokens" in r.json()["detail"]
+    assert len(calls) == 2                       # first try + one repair, no more
+    line = json.loads((tmp_path / "llm_calls.jsonl").read_text().splitlines()[0])
+    assert line["reasoning_tokens"] == 512 and line["finish_reason"] == "length"

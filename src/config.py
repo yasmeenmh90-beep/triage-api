@@ -27,6 +27,8 @@ class Settings:
     retry_base_s: float        # backoff: base, 2*base, 4*base ... plus jitter
     price_in_per_m: float      # USD per 1M input tokens (0 for Ollama / free models)
     price_out_per_m: float     # USD per 1M output tokens
+    max_tokens: int            # hard cap on output tokens per call (reasoning tokens count too)
+    reasoning_effort: str | None  # OpenRouter `reasoning.effort` (none/minimal/low/...); None = don't send
 
 
 def get_settings() -> Settings:
@@ -41,4 +43,6 @@ def get_settings() -> Settings:
         retry_base_s=float(os.getenv("LLM_RETRY_BASE_SECONDS", "1")),
         price_in_per_m=float(os.getenv("LLM_PRICE_IN_PER_M", "0")),
         price_out_per_m=float(os.getenv("LLM_PRICE_OUT_PER_M", "0")),
+        max_tokens=int(os.getenv("LLM_MAX_TOKENS", "512")),
+        reasoning_effort=os.getenv("LLM_REASONING_EFFORT", "").strip().lower() or None,
     )
