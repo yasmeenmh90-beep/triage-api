@@ -32,10 +32,10 @@ Exact response in stub mode (`LLM_STUB=1`):
 {"category":"technical","urgency":"medium","confidence":0.9,"reason":"Stub mode: fixed response, no model was called.","suggested_team":"engineering"}
 ```
 
-Response from the real model (`openrouter/free`, prompt `triage-v1`):
+Response from the real model (`nvidia/nemotron-3.5-lightning:free`, prompt `triage-v1`, 27 Oct 2026):
 
 ```json
-TODO: paste the real response here after the first live run
+{"category":"billing","urgency":"medium","confidence":0.95,"reason":"Customer reports being charged twice this month.","suggested_team":"finance"}
 ```
 
 A deliberately broken request returns `400` and names the field, without calling the model:
@@ -68,12 +68,12 @@ Full version: [JOB-CARD.md](JOB-CARD.md)
 
 ## Provider and model
 
-- **Used:** OpenRouter, model `openrouter/free`. Stages 0–4 were built and tested against Ollama with `gemma3:1b`.
+- **Used:** OpenRouter, model `nvidia/nemotron-3.5-lightning:free` (pinned, see notes below). Stages 0–4 were built against Ollama (`gemma3:1b`); moving to OpenRouter took changing the three env vars below and no code.
 - Changing provider means changing three env vars and no code:
 
 | | `LLM_BASE_URL` | `LLM_API_KEY` | `LLM_MODEL` |
 |---|---|---|---|
-| OpenRouter | `https://openrouter.ai/api/v1` | your key | `openrouter/free` |
+| OpenRouter | `https://openrouter.ai/api/v1` | your key | `nvidia/nemotron-3.5-lightning:free` |
 | Ollama | `http://localhost:11434/v1/` | `ollama` | `gemma3:1b` |
 
 These three variables are the only difference between a model on your laptop and one in a datacentre. That's why the provider is never hard-coded.
@@ -106,15 +106,19 @@ python -m evals.run_eval              # terminal 2: 8 calls, prints score, saves
 
 | Date | Prompt | Model | Category | Urgency | Failed cases |
 |---|---|---|---|---|---|
-| TODO | triage-v1 | openrouter/free | TODO / 8 | TODO / 8 | TODO |
+| 2026-10-27 | triage-v1 | nvidia/nemotron-3.5-lightning:free | **8 / 8 (100%)** | 8 / 8 (100%) | none |
+
+All 8 answers passed schema validation on the first try (0 repairs). The ambiguous case (cancel + refund + crash) went to `billing` at confidence 0.85. The vague message and the prompt-injection attempt both went to `other` at confidence 0.3, so the when-unsure rule and the injection defence held. Eight cases I wrote myself is a small, easy set, so treat 8/8 as "no obvious failures yet", not "solved". It's the baseline to compare the next prompt version against. Raw results: `evals/results/2026-10-27_triage-v1_nvidia_nemotron-3.5-lightning_free.json`.
 
 ## Cost
 
 One logged call (`logs/llm_calls.jsonl`):
 
 ```json
-TODO: paste one real line here after a live call
+{"ts": "2026-10-27T08:47:32.011524+00:00", "prompt_version": "triage-v1", "model": "nvidia/nemotron-3.5-lightning:free", "input_tokens": 654, "output_tokens": 706, "duration_ms": 8368, "attempts": 1, "repair": false, "outcome": "ok", "est_cost_usd": 0.0}
 ```
+
+Across 9 logged calls: **649 input / 1,126 output tokens per call on average, 13.5 s average latency, 1.00 calls per request (no repairs).** The JSON answer is only ~40 tokens. The rest of the output tokens are the model's hidden reasoning, so the output side, not the prompt, drives the bill.
 
 Estimate for 10,000 requests a day:
 
@@ -122,11 +126,13 @@ Estimate for 10,000 requests a day:
 python -m evals.cost_estimate --per-day 10000 --in-price <$/M in> --out-price <$/M out>
 ```
 
-TODO: paste the one-line output. On `openrouter/free` the cash cost is $0, but the free tier allows only 50 requests a day, so 10,000 a day would need a paid model. The estimate counts repairs as real extra calls.
+**10,000 requests/day ≈ 17.8M tokens/day.** On this free model that is $0 in cash, but the free tier caps at 50 requests/day, so real volume needs a paid model. At an illustrative price of $0.10/M input and $0.40/M output, it would be about 6.5M × $0.10 + 11.3M × $0.40 ≈ **$5/day (~$150/month)**, and about 85% of that pays for reasoning tokens. The estimate counts repairs as real extra calls.
 
 ## Notes from Stage 2 (first real answers)
 
-TODO: two or three lines on what surprised you reading the first three real answers (shape drift, code fences, confidence values, and so on).
+- **`openrouter/free` is a lottery.** It routes each call to a random free model. On my first call it picked a content-safety model, which replied `User Safety: safe` instead of `ready`. For a classifier you need the same model every run, so I pinned one.
+- **Free models fail in different ways, and none of them are my code:** `gemma-4-31b` and `gemma-4-26b` returned upstream 429s (shared Google pool), `nemotron-3-super` returned a provider-side 404, and `inkling-small` returned 403 (only allowed inside agent apps). The API handled these as designed: it retried each 429 twice with backoff, then returned a clean 502 and logged the failure. It never crashed. Upstream 429s did not count against my 50/day.
+- **The JSON shape was stable.** Every real answer parsed and validated on the first try, with no code fences, no extra fields and no repairs. The surprise was latency: 8–25 s per call, because the model reasons before answering.
 
 ## Tests
 
@@ -138,4 +144,4 @@ The tests run against `tests/mock_llm.py`, a fake OpenAI-compatible server. They
 
 ## What I'd fix with another day
 
-TODO: one honest line. For example, add `response_format` JSON-schema output where the model supports it, or test prompt v2 against v1 on the same eval set.
+The slowest eval call took **24.6 s against a 30 s timeout**, because of hidden reasoning tokens (up to 2,538 output tokens for a ~40-token answer). With another day I'd cap `max_tokens` / turn reasoning off, or race a non-reasoning model on the same 8 cases, and add harder eval cases (mixed-language, very long, sarcastic) so 8/8 stops being easy.
